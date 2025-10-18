@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>משחקי אנרגיה - כיתה ו׳</title>
+  <style>
+    :root{
+      --bg:#0f172a;
+      --card:#111827;
+      --muted:#9ca3af;
+      --text:#f8fafc;
+      --accent:#60a5fa;
+      --ok:#22c55e;
+      --bad:#ef4444;
+      --warn:#f59e0b;
+    }
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";}
+    .wrap{max-width:1000px;margin:0 auto;padding:20px;}
+    h1,h2{margin:0 0 12px}
+    h1{font-size:28px}
+    h2{font-size:22px}
+    p{color:var(--muted)}
+    .grid{display:grid;gap:16px}
+    @media (min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+    .card{background:linear-gradient(180deg,#0b1220 0%, #0b1220cc 100%);border:1px solid #1f2937;padding:16px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .btn{background:var(--accent);border:none;color:#001028;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer} .btn:disabled{opacity:.5;cursor:not-allowed}
+    .btn.secondary{background:#374151;color:#e5e7eb}
+    .btn.ghost{background:transparent;border:1px solid #374151;color:#e5e7eb}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .pill{padding:6px 10px;border-radius:999px;border:1px solid #334155;color:#e2e8f0;font-size:12px}
+    .muted{color:var(--muted)}
+    .ok{color:var(--ok)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+    .hr{height:1px;background:#263041;margin:12px 0}
+    .tag{font-size:12px;background:#1f2937;border:1px solid #334155;color:#cbd5e1;border-radius:999px;padding:3px 8px}
+    .footer{margin-top:24px;color:#94a3b8;font-size:12px}
+    .hidden{display:none}
+    .small{font-size:13px}
+    .kudos{font-weight:700}
+    /* Quiz */
+    .quiz-q{margin-bottom:8px}
+    .answers{display:grid;gap:8px}
+    .answer{border:1px solid #334155;background:#0b1322;padding:12px 14px;border-radius:12px;cursor:pointer;color:#f8fafc;font-weight:600}
+    .answer:hover,.answer:focus{outline:2px solid #3b82f6;background:#16233a}
+    .answer.selected{outline:2px solid #3b82f6;background:#16233a;color:#f8fafc}
+    .answer.correct{border-color:var(--ok);background:rgba(34,197,94,.12);color:#f8fafc}
+    .answer.wrong{border-color:var(--bad);background:rgba(239,68,68,.12);color:#f8fafc}
+    .score{font-weight:800}
+    /* Matching */
+    .board{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .flip{height:80px;display:flex;align-items:center;justify-content:center;background:#0b1322;border:1px solid #334155;border-radius:12px;cursor:pointer;position:relative;user-select:none}
+    .flip.revealed{background:#16233a}
+    .flip.matched{background:rgba(34,197,94,.12);border-color:var(--ok)}
+    /* DnD */
+    .bank,.buckets{display:flex;gap:12px;flex-wrap:wrap}
+    .chip{padding:8px 12px;border-radius:999px;background:#0b1322;border:1px solid #334155;cursor:grab}
+    .chip.selected{outline:2px solid #3b82f6;background:#16233a}
+    .bucket{min-height:80px;flex:1;border:2px dashed #334155;border-radius:12px;padding:10px}
+    .bucket h4{margin:0 0 8px}
+    .bucket.filled{border-color:#4b5563;background:#0b13223d}
+    /* Chain */
+    .chain{display:flex;gap:6px;flex-wrap:wrap}
+    .node{padding:8px 10px;border-radius:8px;background:#0b1322;border:1px solid #334155;cursor:grab}
+    .arrow{padding:8px}
+    .dropzone{min-width:120px;min-height:46px;border:2px dashed #334155;border-radius:8px;display:flex;align-items:center;justify-content:center}
+    .good{outline:2px solid var(--ok)}
+    .badline{outline:2px solid var(--bad)}
+  
+    /* Jeopardy modal answers layout */
+    #jAnswers .answer{display:block;width:100%;text-align:right;margin:6px 0;color:#f8fafc;background:#0b1322;border:1px solid #334155;padding:12px 14px;border-radius:10px;cursor:pointer}
+    #jAnswers .answer.selected{outline:2px solid #3b82f6;background:#16233a}
+
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>🎮 משחקי אנרגיה — כיתה ו׳</h1>
+    <p class="small">בנושא: סוגי אנרגיה, מעבר לעומת המרה, תופעות טבעיות/מלאכותיות, ושרשראות אנרגיה.</p>
+
+    <div class="grid">
+      <!-- QUIZ -->
+      <section class="card" id="quiz">
+        <div class="row"><h2>1) חידון מהיר</h2><span class="pill">רב-ברירה</span></div>
+        <p class="muted small">סמנו את התשובה הנכונה. בסוף תראו ציון.</p>
+        <div id="quizContainer"></div>
+        <div class="hr"></div>
+        <div class="row">
+          <button class="btn" id="submitQuiz">בדיקת תשובות</button>
+          <button class="btn secondary" id="resetQuiz">איפוס</button>
+          <span class="score" id="quizScore"></span>
+        </div>
+      </section>
+
+      <!-- MATCHING -->
+      <section class="card" id="matching">
+        <div class="row"><h2>2) זכרון/התאמה</h2><span class="pill">התאם תיאור ↔ סוג אנרגיה</span></div>
+        <p class="muted small">הפכו שני קלפים ומצאו זוג מתאים.</p>
+        <div class="board" id="board"></div>
+        <div class="hr"></div>
+        <div class="row">
+          <button class="btn" id="resetMatch">משחק חדש</button>
+          <span id="matchStatus" class="small"></span>
+        </div>
+      </section>
+
+      <!-- DRAG & DROP -->
+      <section class="card" id="dnd">
+        <div class="row"><h2>3) גרור ושחרר</h2><span class="pill">מעבר/המרה/טבעי/מלאכותי</span></div>
+        <p class="muted small">גררו את הפריטים אל הדלי המתאים.</p>
+        <div class="bank" id="bank"></div>
+        <div class="buckets">
+          <div class="bucket" data-bucket="מעבר אנרגיה"><h4>מעבר אנרגיה</h4></div>
+          <div class="bucket" data-bucket="המרת אנרגיה"><h4>המרת אנרגיה</h4></div>
+          <div class="bucket" data-bucket="טבעי"><h4>תופעה טבעית</h4></div>
+          <div class="bucket" data-bucket="מלאכותי"><h4>תופעה מלאכותית/מכשיר</h4></div>
+        </div>
+        <div class="hr"></div>
+        <div class="row">
+          <button class="btn" id="checkDnD">בדיקה</button>
+          <button class="btn secondary" id="resetDnD">איפוס</button>
+          <span id="dndStatus" class="small"></span>
+        </div>
+      </section>
+
+      <!-- CHAIN -->
+      <section class="card" id="chain">
+        <div class="row"><h2>4) בנו שרשרת אנרגיה</h2><span class="pill">סיבה→תוצאה</span></div>
+        <p class="muted small">סדרו את המרכיבים לשרשרת נכונה (דוג׳: שמש → צמח → אדם רץ → קול).</p>
+        <div class="row">
+          <div id="nodes" class="chain"></div>
+        </div>
+        <div class="row" id="chainSlots"></div>
+        <div class="hr"></div>
+        <div class="row">
+          <button class="btn" id="checkChain">בדיקה</button>
+          <button class="btn secondary" id="resetChain">איפוס</button>
+          <span id="chainStatus" class="small"></span>
+        </div>
+      </section>
+    
+      <!-- TRUE/FALSE BLITZ -->
+      <section class="card" id="tf">
+        <div class="row"><h2>5) בזק נכון/לא נכון</h2><span class="pill">60 שניות · כמה תשיגו?</span></div>
+        <p class="muted small">לחצו על נכון/לא נכון לכל היגד לפני שהזמן יסתיים.</p>
+        <div id="tfPrompt" class="quiz-q"></div>
+        <div class="row">
+          <button class="btn" id="btnTrue">נכון</button>
+          <button class="btn secondary" id="btnFalse">לא נכון</button>
+          <span class="pill">⏱ <span id="tfTime">60</span>s</span>
+          <span class="score">ניקוד: <span id="tfScore">0</span></span>
+        </div>
+        <div class="hr"></div>
+        <div class="row">
+          <button class="btn" id="startTF">התחל משחק</button>
+          <button class="btn secondary" id="resetTF">איפוס</button>
+          <span id="tfStatus" class="small"></span>
+        </div>
+      </section>
+
+      <!-- JEOPARDY BOARD -->
+      <section class="card" id="jeopardy">
+        <div class="row"><h2>6) לוח אתגרים (Jeopardy)</h2><span class="pill">בחרו קטגוריה ונקודות</span></div>
+        <p class="muted small">ענו נכון כדי לצבור נקודות. אפשר לשחק בקבוצות. אין חלון קופץ — הכל קורה כאן.</p>
+        <div id="jBoard" class="grid" style="grid-template-columns: repeat(3, 1fr);"></div>
+        <div id="jInline" class="card" style="margin-top:12px;display:none;">
+          <div id="jQ" class="quiz-q"></div>
+          <div id="jAnswers" class="answers"></div>
+          <div class="hr"></div>
+          <div class="row">
+            <button class="btn" id="jSubmit">בדיקה</button>
+            <button class="btn secondary" id="jClose">סגירה</button>
+            <span id="jFeedback" class="small"></span>
+          </div>
+        </div>
+        <div class="hr"></div>
+        <div class="row">
+          <span class="score">ניקוד: <span id="jScore">0</span></span>
+          <button class="btn secondary" id="resetJ">איפוס</button>
+        </div>
+      </section>
+
+      <!-- SHORT ANSWER -->
+      <section class="card" id="short">
+        <div class="row"><h2>7) תשובה קצרה</h2><span class="pill">כתבו במילים שלכם</span></div>
+        <p class="muted small">ענו בקצרה. המערכת בודקת לפי מילות מפתח (מקבל גם ניסוחים שונים).</p>
+        <div id="shortWrap"></div>
+        <div class="hr"></div>
+        <div class="row">
+          <button class="btn" id="shortCheck">בדיקה</button>
+          <button class="btn secondary" id="shortReset">איפוס</button>
+          <span id="shortStatus" class="small"></span>
+        </div>
+      </section>
+
+      <!-- FLASHCARDS -->
+      <section class="card" id="flash">
+        <div class="row"><h2>8) כרטיסיות תרגול</h2><span class="pill">לחצי כדי לחשוף תשובה</span></div>
+        <p class="muted small">נסו לנחש לפני הלחיצה. השתמשו בכרטיסיות לשינון מהיר בכיתה או בבית.</p>
+        <div id="flashWrap" class="board"></div>
+        <div class="hr"></div>
+        <div class="row">
+          <button class="btn" id="flashNew">כרטיסיות חדשות</button>
+        </div>
+      </section>
+
+      <!-- FILL IN THE BLANK -->
+      <section class="card" id="fib">
+        <div class="row"><h2>9) השלימי את המשפט</h2><span class="pill">בחירה מתפריט</span></div>
+        <div id="fibWrap"></div>
+        <div class="hr"></div>
+        <div class="row">
+          <button class="btn" id="fibCheck">בדיקה</button>
+          <button class="btn secondary" id="fibReset">איפוס</button>
+          <span id="fibStatus" class="small"></span>
+        </div>
+      </section>
+
+      <!-- RANDOM SPINNER -->
+      <section class="card" id="spin">
+        <div class="row"><h2>10) גלגל השאלות</h2><span class="pill">דיון כיתתי</span></div>
+        <p class="muted small">לחצו “סובבי” וקבלו שאלה/אתגר מהיר.</p>
+        <div class="row">
+          <button class="btn" id="spinBtn">סובבי 🎯</button>
+          <span id="spinOut" class="pill"></span>
+        </div>
+      </section>
+</div>
+
+    <div class="footer">
+      נבנה ללמידה דיגיטלית בכיתה ו׳. אפשר לשתף את הקובץ לתלמידים לפתיחה בדפדפן בנייד/מחשב.
+    </div>
+  </div>
+
+<script>
+/* ----------------------- QUIZ ----------------------- */
+const quizData = [
+  {
+    q: "איזו דוגמה מייצגת המרת אנרגיה?",
+    answers: ["רוח דוחפת מפרש של סירה", "חום זורם מכוס מים חמים לשולחן", "חשמל בנורה הופך לאור וחום", "אוויר נע מזיז עלים"],
+    correct: 2,
+    explain: "בנורה, אנרגיית חשמל מומרת לאנרגיית אור וחום."
+  },
+  {
+    q: "איזו מהבאות היא תופעה טבעית?",
+    answers: ["טלויזיה דולקת", "הר געש מתפרץ", "מכונית נוסעת", "מייבש שיער עובד"],
+    correct: 1,
+    explain: "הר געש הוא מקור טבעי לאנרגיה (חום/תנועה/קול)."
+  },
+  {
+    q: "מהו מעבר אנרגיה?",
+    answers: ["הפיכת סוג אנרגיה אחד לסוג אחר", "תנועה של אותה אנרגיה ממקום אחד לאחר", "ייצור אנרגיה חדשה יש מאין", "הכפלת כמות האנרגיה"],
+    correct: 1,
+    explain: "מעבר אנרגיה: אותה צורת אנרגיה עוברת מאובייקט/מקום אחד לאחר."
+  },
+  {
+    q: "גפרור בוער הוא דוגמה ל:",
+    answers: ["מעבר חום בלבד", "אנרגיית קול", "המרה: כימית → חום+אור", "תופעה מלאכותית ללא אנרגיה"],
+    correct: 2,
+    explain: "אנרגיה כימית בעץ/ראש הגפרור מומרת לחום ולאור."
+  },
+  {
+    q: "סירת מפרש בתנועה ברוח היא בעיקר:",
+    answers: ["המרה מרוח לתנועה", "מעבר אנרגיית תנועה מהרוח לסירה", "המרה מחשמל לאור", "תופעה ללא אנרגיה"],
+    correct: 1,
+    explain: "הרוח (תנועה) מעבירה אנרגיה לסירה—בעיקר מעבר."
+  }
+];
+
+function renderQuiz(){
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = '';
+  quizData.forEach((item, idx)=>{
+    const qDiv = document.createElement('div');
+    qDiv.className = 'quiz-item';
+    qDiv.innerHTML = `<div class="quiz-q"><b>${idx+1}.</b> ${item.q}</div>`;
+    const answersDiv = document.createElement('div');
+    answersDiv.className = 'answers';
+    answersDiv.setAttribute('role','radiogroup');
+    item.answers.forEach((ans, i)=>{
+      const a = document.createElement('button');
+      a.className = 'answer';
+      a.type = 'button';
+      a.setAttribute('data-q', idx);
+      a.setAttribute('data-a', i);
+      a.setAttribute('role','radio');
+      a.setAttribute('aria-checked','false');
+      a.textContent = ans;
+      a.addEventListener('click', ()=>{
+        // single-select behavior
+        [...answersDiv.querySelectorAll('.answer')].forEach(el=>{
+          el.classList.remove('selected');
+          el.setAttribute('aria-checked','false');
+        });
+        a.classList.add('selected');
+        a.setAttribute('aria-checked','true');
+        a.focus();
+      });
+      answersDiv.appendChild(a);
+    });
+    qDiv.appendChild(answersDiv);
+    container.appendChild(qDiv);
+  });
+}
+renderQuiz();
+
+document.getElementById('submitQuiz').onclick = ()=>{
+  let score = 0;
+  document.querySelectorAll('#quizContainer .answers').forEach((group, idx)=>{
+    const selected = group.querySelector('.answer.selected');
+    const ex = quizData[idx];
+    [...group.querySelectorAll('.answer')].forEach(el=>el.classList.remove('correct','wrong'));
+    if(selected){
+      if(parseInt(selected.dataset.a) === ex.correct){
+        selected.classList.add('correct'); score++;
+      } else {
+        selected.classList.add('wrong');
+        // mark correct
+        group.children[ex.correct].classList.add('correct');
+      }
+    } else {
+      // mark correct for visibility
+      group.children[ex.correct].classList.add('correct');
+    }
+  });
+  document.getElementById('quizScore').textContent = `ציון: ${score} / ${quizData.length}`;
+};
+
+document.getElementById('resetQuiz').onclick = ()=>{
+  renderQuiz();
+  document.getElementById('quizScore').textContent='';
+};
+
+/* --------------------- MATCHING --------------------- */
+const pairs = [
+  ["נורה דולקת", "אור/חום (חשמל → אור+חום)"],
+  ["גפרור בוער", "כימית → חום+אור"],
+  ["סירת מפרש", "מעבר תנועה מרוח לסירה"],
+  ["הר געש", "חום/תנועה/קול (טבעי)"],
+  ["כוס מים חמים", "מעבר חום לחומר קר יותר"],
+  ["רמקול משמיע צליל", "חשמל → קול"]
+];
+
+let boardState = [];
+function setupBoard(){
+  const flat = [];
+  pairs.forEach(([a,b],i)=>{
+    flat.push({id:i,type:'left',text:a});
+    flat.push({id:i,type:'right',text:b});
+  });
+  // shuffle
+  for(let i=flat.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1)); [flat[i],flat[j]]=[flat[j],flat[i]];
+  }
+  boardState = flat.map(x=>({...x, revealed:false, matched:false}));
+  const board = document.getElementById('board');
+  board.innerHTML='';
+  boardState.forEach((cell, idx)=>{
+    const div = document.createElement('div');
+    div.className = 'flip';
+    div.innerHTML = '<span style="opacity:.65">הפוך</span>';
+    div.onclick = ()=>reveal(idx, div);
+    board.appendChild(div);
+  });
+  document.getElementById('matchStatus').textContent='';
+}
+
+let firstPick = null; let lockBoard = false;
+function reveal(idx, el){
+  if(lockBoard) return;
+  const cell = boardState[idx];
+  if(cell.matched || cell.revealed) return;
+  cell.revealed = true;
+  el.classList.add('revealed');
+  el.textContent = cell.text;
+  if(firstPick===null){ firstPick = idx; return; }
+  lockBoard = true;
+  setTimeout(()=>{
+    const a = boardState[firstPick];
+    const b = cell;
+    const els = document.querySelectorAll('#board .flip');
+    if(a.id===b.id && a.type!==b.type){
+      a.matched = b.matched = true;
+      els[firstPick].classList.add('matched');
+      els[idx].classList.add('matched');
+      document.getElementById('matchStatus').textContent='יפה! נמצא זוג תואם.';
+    } else {
+      a.revealed = b.revealed = false;
+      els[firstPick].classList.remove('revealed');
+      els[idx].classList.remove('revealed');
+      els[firstPick].innerHTML = '<span style="opacity:.65">הפוך</span>';
+      els[idx].innerHTML = '<span style="opacity:.65">הפוך</span>';
+    }
+    firstPick=null; lockBoard=false;
+    // win check
+    if(boardState.every(c=>c.matched)){
+      document.getElementById('matchStatus').innerHTML='<span class="ok kudos">כל הכבוד! התאמתם את כל הזוגות.</span>';
+    }
+  },650);
+}
+setupBoard();
+document.getElementById('resetMatch').onclick = setupBoard;
+
+/* -------------------- DRAG & DROP ------------------- */
+const items = [
+  {text:"רוח מזיזה סירה", bucket:"מעבר אנרגיה"},
+  {text:"חשמל בנורה → אור", bucket:"המרת אנרגיה"},
+  {text:"כוס מים חמים על שולחן", bucket:"מעבר אנרגיה"},
+  {text:"גפרור בוער", bucket:"המרת אנרגיה"},
+  {text:"הר געש מתפרץ", bucket:"טבעי"},
+  {text:"טלויזיה דולקת", bucket:"מלאכותי"},
+  {text:"רמקול משמיע קול", bucket:"המרת אנרגיה"},
+  {text:"עצים נעים ברוח", bucket:"טבעי"}
+];
+
+function setupDnD(){
+  const bank = document.getElementById('bank');
+  bank.innerHTML='';
+  const shuffled = [...items].sort(()=>Math.random()-0.5);
+  shuffled.forEach((it,i)=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = it.text;
+    chip.draggable = true;
+    chip.dataset.correct = it.bucket;
+    chip.ondragstart = (e)=> e.dataTransfer.setData('text/plain', it.text);
+    bank.appendChild(chip);
+  });
+  document.querySelectorAll('.bucket').forEach(b=>{
+    b.classList.remove('filled');
+    b.innerHTML = `<h4>${b.dataset.bucket}</h4>`;
+    b.ondragover = (e)=>{ e.preventDefault(); };
+    b.ondrop = (e)=>{
+      e.preventDefault();
+      const txt = e.dataTransfer.getData('text/plain');
+      const chip = [...document.querySelectorAll('.chip')].find(c=>c.textContent===txt);
+      if(chip){
+        b.appendChild(chip);
+        b.classList.add('filled');
+      }
+    };
+  });
+  document.getElementById('dndStatus').textContent='';
+}
+setupDnD();
+
+document.getElementById('checkDnD').onclick = ()=>{
+  let correct=0, total=items.length;
+  document.querySelectorAll('.chip').forEach(ch=>{
+    const parent = ch.parentElement.closest('.bucket');
+    if(parent && parent.dataset.bucket === ch.dataset.correct){
+      ch.style.outline = '2px solid var(--ok)';
+      correct++;
+    } else {
+      ch.style.outline = '2px solid var(--bad)';
+    }
+  });
+  document.getElementById('dndStatus').innerHTML = `תוצאה: ${correct} / ${total}`;
+};
+
+document.getElementById('resetDnD').onclick = setupDnD;
+
+/* -------------------- CHAIN BUILDER ----------------- */
+const chainPools = [
+  // target chain 1
+  {id:'sun', text:'שמש (אור)', role:'source', order:1},
+  {id:'plant', text:'צמח (אנ׳ כימית בפוטוסינתזה)', role:'middle', order:2},
+  {id:'runner', text:'אדם רץ (תנועה)', role:'middle', order:3},
+  {id:'sound', text:'קול (מחיאת כף/רמקול)', role:'end', order:4},
+  // distractors
+  {id:'tv', text:'טלויזיה (חשמל→אור+קול)', role:'distractor', order:99},
+  {id:'volcano', text:'הר געש (חום/תנועה)', role:'distractor', order:99},
+  {id:'match', text:'גפרור (כימית→חום+אור)', role:'distractor', order:99}
+];
+
+function setupChain(){
+  const nodes = document.getElementById('nodes');
+  const slots = document.getElementById('chainSlots');
+  nodes.innerHTML='';
+  slots.innerHTML='';
+  const pool = [...chainPools].sort(()=>Math.random()-0.5);
+  pool.forEach(n=>{
+    const el = document.createElement('div');
+    el.className='node';
+    el.textContent = n.text;
+    el.draggable = true;
+    el.dataset.id = n.id;
+    el.dataset.order = n.order;
+    el.ondragstart = e=> e.dataTransfer.setData('text/plain', n.id);
+    nodes.appendChild(el);
+  });
+  // 4 slots
+  for(let i=1;i<=4;i++){
+    const dz = document.createElement('div');
+    dz.className='dropzone';
+    dz.dataset.slot = i;
+    dz.textContent = 'שחררו כאן';
+    dz.ondragover = e=>e.preventDefault();
+    dz.ondrop = e=>{
+      e.preventDefault();
+      const id = e.dataTransfer.getData('text/plain');
+      const node = [...document.querySelectorAll('.node')].find(n=>n.dataset.id===id);
+      if(node){
+        dz.innerHTML='';
+        dz.appendChild(node);
+      }
+    };
+    document.getElementById('chainSlots').appendChild(dz);
+    if(i<4){
+      const arrow = document.createElement('div');
+      arrow.className='arrow';
+      arrow.textContent = '→';
+      document.getElementById('chainSlots').appendChild(arrow);
+    }
+  }
+  document.getElementById('chainStatus').textContent='';
+}
+setupChain();
+
+document.getElementById('checkChain').onclick = ()=>{
+  const slots = [...document.querySelectorAll('.dropzone')];
+  let ok=true;
+  slots.forEach((dz,i)=>{
+    dz.classList.remove('good','badline');
+    const node = dz.querySelector('.node');
+    if(!node){ ok=false; dz.classList.add('badline'); return; }
+    const expected = (i+1); // 1..4
+    if(parseInt(node.dataset.order) === expected){
+      dz.classList.add('good');
+    } else {
+      ok=false; dz.classList.add('badline');
+    }
+  });
+  document.getElementById('chainStatus').innerHTML = ok ? '<span class="ok kudos">מושלם! בניתם שרשרת נכונה.</span>' : '<span class="warn">יש טעויות. נסו לסדר מחדש.</span>';
+};
+
+document.getElementById('resetChain').onclick = setupChain;
+/* --------- Click-to-move alternative for DnD (mobile friendly) --------- */
+let selectedChip = null;
+document.addEventListener('click', (e)=>{
+  const chip = e.target.closest('.chip');
+  const bucket = e.target.closest('.bucket');
+  if(chip){
+    if(selectedChip === chip){
+      selectedChip.classList.remove('selected');
+      selectedChip = null;
+    } else {
+      if(selectedChip) selectedChip.classList.remove('selected');
+      selectedChip = chip;
+      chip.classList.add('selected');
+    }
+  } else if(bucket && selectedChip){
+    bucket.appendChild(selectedChip);
+    bucket.classList.add('filled');
+    selectedChip.classList.remove('selected');
+    selectedChip = null;
+  }
+});
+
+/* ------------------------ TRUE/FALSE BLITZ ------------------------ */
+const tfPool = [
+  {t:"בכוס מים חמים על שולחן מתרחש מעבר חום.", a:true},
+  {t:"נורה דולקת היא דוגמה למעבר אנרגיה בלבד.", a:false},
+  {t:"גפרור בוער ממיר אנרגיה כימית לאור וחום.", a:true},
+  {t:"סירת מפרש ברוח היא בעיקר המרה.", a:false},
+  {t:"הר געש הוא תופעה מלאכותית.", a:false},
+  {t:"רמקול ממיר חשמל לאנרגיית קול.", a:true},
+  {t:"מעבר אנרגיה הוא שינוי סוג האנרגיה.", a:false},
+  {t:"טלוויזיה דולקת היא דוגמה לתופעה מלאכותית.", a:true}
+];
+let tfIdx=0, tfScore=0, tfTimer=null, tfTime=60, tfRunning=false;
+function tfShow(){
+  document.getElementById('tfPrompt').textContent = tfPool[tfIdx].t;
+}
+function tfNext(){
+  tfIdx = (tfIdx+1) % tfPool.length;
+  tfShow();
+}
+function tfStart(){
+  tfIdx=0; tfScore=0; tfTime=60; tfRunning=true;
+  document.getElementById('tfScore').textContent=tfScore;
+  document.getElementById('tfTime').textContent=tfTime;
+  tfShow();
+  if(tfTimer) clearInterval(tfTimer);
+  tfTimer = setInterval(()=>{
+    tfTime--; document.getElementById('tfTime').textContent=tfTime;
+    if(tfTime<=0){ clearInterval(tfTimer); tfRunning=false; document.getElementById('tfStatus').innerHTML='<span class="kudos">נגמר הזמן!</span>'; }
+  },1000);
+}
+document.getElementById('startTF').onclick = tfStart;
+document.getElementById('resetTF').onclick = ()=>{ if(tfTimer) clearInterval(tfTimer); tfRunning=false; tfIdx=0; tfScore=0; tfTime=60; document.getElementById('tfScore').textContent='0'; document.getElementById('tfTime').textContent='60'; document.getElementById('tfPrompt').textContent=''; document.getElementById('tfStatus').textContent=''; };
+document.getElementById('btnTrue').onclick = ()=>{ if(!tfRunning) return; if(tfPool[tfIdx].a){ tfScore++; document.getElementById('tfScore').textContent=tfScore; } tfNext();};
+document.getElementById('btnFalse').onclick = ()=>{ if(!tfRunning) return; if(!tfPool[tfIdx].a){ tfScore++; document.getElementById('tfScore').textContent=tfScore; } tfNext();};
+
+/* ------------------------ JEOPARDY BOARD ------------------------ */
+const jCategories = [
+  {name:"סוגי אנרגיה", q:[
+    {p:100, q:"איזו אנרגיה מופקת בנורה?", opts:["תנועה","אור+חום","קול"], correct:1},
+    {p:200, q:"איזו אנרגיה אוגרת מזון?", opts:["כימית","אור","חשמל"], correct:0}
+  ]},
+  {name:"מעבר מול המרה", q:[
+    {p:100, q:"סירת מפרש ברוח היא:", opts:["המרה","מעבר","ללא אנרגיה"], correct:1},
+    {p:200, q:"חשמל לרמקול → קול הוא:", opts:["מעבר","המרה","טבעי"], correct:1}
+  ]},
+  {name:"טבעי/מלאכותי", q:[
+    {p:100, q:"הר געש הוא:", opts:["מלאכותי","טבעי","המרה"], correct:1},
+    {p:200, q:"טלויזיה דולקת היא:", opts:["טבעי","מלאכותי","מעבר"], correct:1}
+  ]}
+];
+let jScore=0;
+function renderJBoard(){
+  const el = document.getElementById('jBoard');
+  el.innerHTML = "";
+  jCategories.forEach(cat=>{
+    const col = document.createElement('div');
+    col.className='card';
+    col.innerHTML = `<h3 style="margin:0 0 8px">${cat.name}</h3>`;
+    cat.q.forEach((item,idx)=>{
+      const btn = document.createElement('button');
+      btn.className='btn ghost';
+      btn.textContent = `${item.p}`;
+      btn.dataset.cat = cat.name;
+      btn.dataset.idx = idx;
+      btn.onclick = ()=>openJ(cat.name, idx, btn);
+      col.appendChild(btn);
+      col.appendChild(document.createElement('br'));
+    });
+    el.appendChild(col);
+  });
+}
+renderJBoard();
+
+let jCurrent = null, jBtn=null;
+function openJ(catName, idx, btn){
+  const cat = jCategories.find(c=>c.name===catName);
+  const item = cat.q[idx];
+  jCurrent = {catName, idx, item};
+  jBtn = btn;
+  const qEl = document.getElementById('jQ');
+  qEl.textContent = item.q;
+  const ans = document.getElementById('jAnswers');
+  ans.innerHTML = "";
+  item.opts.forEach((o,i)=>{
+    const b = document.createElement('button');
+    b.className = 'answer';
+    b.type='button';
+    b.textContent = o;
+    b.onclick = ()=>{
+      [...ans.querySelectorAll('.answer')].forEach(x=>x.classList.remove('selected'));
+      b.classList.add('selected');
+    };
+    ans.appendChild(b);
+  });
+  document.getElementById('jFeedback').textContent='';
+  const panel = document.getElementById('jInline');
+  panel.style.display = 'block';
+  panel.scrollIntoView({behavior:'smooth', block:'center'});
+  // mark tile as active (but not yet scored)
+  jBtn.classList.add('selected');
+}
+
+document.getElementById('jClose').onclick = ()=>{
+  const panel = document.getElementById('jInline');
+  panel.style.display = 'none';
+  document.getElementById('jFeedback').textContent='';
+  if(jBtn){ jBtn.classList.remove('selected'); }
+};
+
+document.getElementById('jSubmit').onclick = ()=>{
+  const sel = document.querySelector('#jAnswers .answer.selected');
+  const fb = document.getElementById('jFeedback');
+  if(!sel){ fb.textContent='בחרו תשובה.'; return; }
+  const i = [...document.querySelectorAll('#jAnswers .answer')].indexOf(sel);
+  if(jBtn.disabled){ fb.textContent='כבר עניתם על האריח הזה.'; return; }
+  if(i === jCurrent.item.correct){
+    fb.innerHTML = '<span class="ok">נכון!</span>';
+    jScore += jCurrent.item.p;
+    document.getElementById('jScore').textContent = jScore;
+    jBtn.disabled = true;
+    setTimeout(()=>{ document.getElementById('jInline').style.display='none'; }, 600);
+  } else {
+    fb.innerHTML = '<span class="bad">לא מדויק, נסו שוב.</span>';
+  }
+};
+
+document.getElementById('resetJ').onclick = ()=>{
+  jScore=0; document.getElementById('jScore').textContent='0'; renderJBoard();
+};
+
+
+
+/* ------------------------ SHORT ANSWER ------------------------ */
+const shortQs = [
+  {q:"הסבירו בקצרה מה ההבדל בין מעבר אנרגיה להמרת אנרגיה.", keys:[["מעבר","אותה"],["המרה","סוג"]]},
+  {q:"תנו דוגמה לטבעי ודוגמה למלאכותי הקשורות לאנרגיה.", keys:[["טבעי"],["מלאכותי"]]},
+  {q:"כתבו שרשרת אנרגיה בת 3–4 חוליות (לדוגמה: שמש → ...).", keys:[["שמש"],["→"],["אנרג"]]
+  }
+];
+function renderShort(){
+  const wrap = document.getElementById('shortWrap');
+  wrap.innerHTML = "";
+  shortQs.forEach((it,idx)=>{
+    const d = document.createElement('div');
+    d.style.marginBottom = '10px';
+    d.innerHTML = `<div class="small"><b>${idx+1}.</b> ${it.q}</div>
+      <textarea rows="2" style="width:100%;background:#0b1322;border:1px solid #334155;border-radius:8px;color:#f8fafc;padding:8px" id="short_${idx}"></textarea>`;
+    wrap.appendChild(d);
+  });
+}
+renderShort();
+
+document.getElementById('shortCheck').onclick = ()=>{
+  let score=0;
+  shortQs.forEach((it,idx)=>{
+    const val = (document.getElementById('short_'+idx).value||"").toLowerCase();
+    let okAll = true;
+    it.keys.forEach(group=>{
+      // at least one of group appears
+      const any = group.some(k=> val.includes(String(k).toLowerCase()));
+      if(!any) okAll=false;
+    });
+    if(okAll) score++;
+  });
+  document.getElementById('shortStatus').textContent = `עניתם היטב על ${score} / ${shortQs.length} שאלות (בדיקה לפי מילות מפתח).`;
+};
+document.getElementById('shortReset').onclick = renderShort;
+
+/* ------------------------ FLASHCARDS ------------------------ */
+const flashPairs = [
+  ["מה ההבדל בין מעבר להמרה?", "מעבר: אותה אנרגיה זזה ממקום/גוף לגוף. המרה: סוג האנרגיה משתנה."],
+  ["גפרור בוער — איזה שינוי?", "המרה: כימית → חום + אור"],
+  ["סירת מפרש בתנועה — איזו תופעה?", "מעבר אנרגיית תנועה מהרוח לסירה"],
+  ["מה עובר בכוס מים חמים על שולחן?", "מעבר חום אל המשטח הקר יותר"],
+  ["רמקול פועל — איזה שינוי?", "המרה: חשמל → קול"],
+  ["הר געש — טבעי או מלאכותי?", "טבעי (חום/תנועה/קול)"]
+];
+function renderFlash(){
+  const wrap = document.getElementById('flashWrap');
+  wrap.innerHTML = '';
+  const shuffled = [...flashPairs].sort(()=>Math.random()-0.5);
+  shuffled.forEach(([q,a])=>{
+    const card = document.createElement('div');
+    card.className = 'flip';
+    card.setAttribute('tabindex','0');
+    card.innerHTML = `<div><b>${q}</b></div>`;
+    let revealed=false;
+    const toggle=()=>{
+      revealed=!revealed;
+      card.classList.toggle('revealed', revealed);
+      card.innerHTML = revealed ? `<div>${a}</div>` : `<div><b>${q}</b></div>`;
+    };
+    card.addEventListener('click', toggle);
+    card.addEventListener('keypress', (e)=>{ if(e.key==='Enter' || e.key===' ') toggle(); });
+    wrap.appendChild(card);
+  });
+}
+renderFlash();
+document.getElementById('flashNew').onclick = renderFlash;
+
+/* -------------------- FILL IN THE BLANK -------------------- */
+const fibQs = [
+  {t:["נורה דולקת ממירה אנרגיית "," ל"," ו","."], opts:[["חשמל","תנועה","כימית"],["אור","תנועה","קול"],["חום","אור","כימית"]], correct:[0,0,0]},
+  {t:["בכוס מים חמים מתרחש "," חום מהמים ל","."], opts:[["מעבר","המרה"],["שולחן","אוויר","יד"]], correct:[0,0]},
+  {t:["סירת מפרש בתנועה ברוח היא בעיקר "," אנרגיה."], opts:[["מעבר","המרה"]], correct:[0]}
+];
+function renderFIB(){
+  const wrap = document.getElementById('fibWrap'); wrap.innerHTML='';
+  fibQs.forEach((q,qi)=>{
+    const line = document.createElement('div'); line.style.marginBottom='10px';
+    let html = "";
+    q.t.forEach((seg, si)=>{
+      html += seg;
+      if(q.opts[si]){
+        html += `<select id="fib_${qi}_${si}" style="background:#0b1322;border:1px solid #334155;color:#f8fafc;border-radius:8px;padding:4px 6px;margin:0 4px">`;
+        q.opts[si].forEach((opt,oi)=>{
+          html += `<option value="${oi}">${opt}</option>`;
+        });
+        html += `</select>`;
+      }
+    });
+    line.innerHTML = html;
+    wrap.appendChild(line);
+  });
+}
+renderFIB();
+document.getElementById('fibCheck').onclick = ()=>{
+  let score=0, total=0;
+  fibQs.forEach((q,qi)=>{
+    q.correct.forEach((ans,si)=>{
+      total++;
+      const sel = document.getElementById(`fib_${qi}_${si}`);
+      if(sel && parseInt(sel.value)===ans){ sel.style.outline='2px solid var(--ok)'; score++; }
+      else if(sel){ sel.style.outline='2px solid var(--bad)'; }
+    });
+  });
+  document.getElementById('fibStatus').textContent = `תוצאה: ${score} / ${total}`;
+};
+document.getElementById('fibReset').onclick = renderFIB;
+
+/* ------------------------ RANDOM SPINNER ------------------------ */
+const spinBank = [
+  "תנו דוגמה להמרה ושכנעו למה זו המרה.",
+  "מצאו בכיתה 2 מצבים של מעבר אנרגיה.",
+  "שרטטו שרשרת אנרגיה בת 4 חוליות.",
+  "סווגו: טבעי/מלאכותי — נר דולק, רוח חזקה, טלוויזיה.",
+  "נמקו: למה רמקול זו המרה?",
+  "המציאו מצב יומיומי של מעבר חום וספרו עליו."
+];
+document.getElementById('spinBtn').onclick = ()=>{
+  const out = document.getElementById('spinOut');
+  out.textContent = "מגריל...";
+  setTimeout(()=>{
+    const pick = spinBank[Math.floor(Math.random()*spinBank.length)];
+    out.textContent = pick;
+  }, 500);
+};
+
+</script>
+</body>
+</html>
